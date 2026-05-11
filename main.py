@@ -6,8 +6,6 @@ from pathlib import Path
 from subprocess import Popen
 from typing import NoReturn
 
-from prawcore import ResponseException
-
 from reddit.subreddit import get_subreddit_threads
 from utils import settings
 from utils.cleanup import cleanup
@@ -114,10 +112,6 @@ if __name__ == "__main__":
         else:
             main()
     except KeyboardInterrupt:
-        shutdown()
-    except ResponseException:
-        print_markdown("## Invalid credentials")
-        print_markdown("Please check your credentials in the config.toml file")
         shutdown()
     except Exception as err:
         config["settings"]["tts"]["tiktok_sessionid"] = "REDACTED"

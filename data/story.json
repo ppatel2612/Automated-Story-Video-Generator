@@ -1,0 +1,18 @@
+{
+  "thread_id": "local_story_sample",
+  "thread_title": "What small moment made your day better than expected?",
+  "thread_url": "https://local.reddit.invalid/r/local/comments/local_story_sample/local_story/",
+  "is_nsfw": false,
+  "comments": [
+    {
+      "comment_id": "local_comment_0",
+      "comment_body": "I found a handwritten note in a used book that simply said, \"You are allowed to start again.\" I needed that more than I expected.",
+      "comment_url": "/r/local/comments/local_story_sample/local_story/local_comment_0/"
+    },
+    {
+      "comment_id": "local_comment_1",
+      "comment_body": "The bus driver waited ten extra seconds when he saw me running through the rain. It saved me from being late to an interview.",
+      "comment_url": "/r/local/comments/local_story_sample/local_story/local_comment_1/"
+    }
+  ]
+}
