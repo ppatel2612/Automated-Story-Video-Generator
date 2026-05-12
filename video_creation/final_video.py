@@ -257,6 +257,7 @@ def make_final_video(
     screenshot_width = int((W * 45) // 100)
     audio = ffmpeg.input(f"assets/temp/{reddit_id}/audio.mp3")
     final_audio = merge_background_audio(audio, reddit_id)
+    final_audio = final_audio.filter("volume", 2.0)
 
     image_clips = list()
 
@@ -288,11 +289,16 @@ def make_final_video(
 
     current_time = 0
     if settings.config["settings"]["storymode"]:
+        post_audio_count = (
+            number_of_clips + 1
+            if settings.config["settings"]["storymodemethod"] == 1
+            else number_of_clips
+        )
         audio_clips_durations = [
             float(
                 ffmpeg.probe(f"assets/temp/{reddit_id}/mp3/postaudio-{i}.mp3")["format"]["duration"]
             )
-            for i in range(number_of_clips)
+            for i in range(post_audio_count)
         ]
         audio_clips_durations.insert(
             0,
@@ -317,23 +323,27 @@ def make_final_video(
             )
             current_time += audio_clips_durations[0]
         elif settings.config["settings"]["storymodemethod"] == 1:
+            if image_clips:
+                background_clip = background_clip.overlay(
+                    image_clips[0],
+                    enable=f"between(t,0,{audio_clips_durations[0]})",
+                    x="(main_w-overlay_w)/2",
+                    y="(main_h-overlay_h)/2",
+                )
+            current_time = audio_clips_durations[0]
             for i in track(range(0, number_of_clips + 1), "Collecting the image files..."):
-                 # Create a transparent image for other clips
-                transparent_image = Image.new('RGBA', (screenshot_width, screenshot_width), (0, 0, 0, 0))
-                transparent_image.save(f"assets/temp/{reddit_id}/png/trs{i}.png")
-
-                image_clips.append(
-                    ffmpeg.input(f"assets/temp/{reddit_id}/png/trs{i}.png")["v"].filter(
+                image_clip = (
+                    ffmpeg.input(f"assets/temp/{reddit_id}/png/img{i}.png")["v"].filter(
                         "scale", screenshot_width, -1
                     )
                 )
                 background_clip = background_clip.overlay(
-                    image_clips[i],
-                    enable=f"between(t,{current_time},{current_time + audio_clips_durations[i]})",
+                    image_clip,
+                    enable=f"between(t,{current_time},{current_time + audio_clips_durations[i + 1]})",
                     x="(main_w-overlay_w)/2",
                     y="(main_h-overlay_h)/2",
                 )
-                current_time += audio_clips_durations[i]
+                current_time += audio_clips_durations[i + 1]
     else:
         for i in range(0, number_of_clips + 1):
             image_clips.append(
@@ -440,6 +450,8 @@ def make_final_video(
                     "c:v": "h264",
                     "b:v": "20M",
                     "b:a": "192k",
+                    "ar": "44100",
+                    "ac": 2,
                     "threads": multiprocessing.cpu_count(),
                 },
             ).overwrite_output().global_args("-progress", progress.output_file.name).run(
@@ -467,12 +479,14 @@ def make_final_video(
                     path,
                     f="mp4",
                     **{
-                        "c:v": "h264",
-                        "b:v": "20M",
-                        "b:a": "192k",
-                        "threads": multiprocessing.cpu_count(),
-                    },
-                ).overwrite_output().global_args("-progress", progress.output_file.name).run(
+                    "c:v": "h264",
+                    "b:v": "20M",
+                    "b:a": "192k",
+                    "ar": "44100",
+                    "ac": 2,
+                    "threads": multiprocessing.cpu_count(),
+                },
+            ).overwrite_output().global_args("-progress", progress.output_file.name).run(
                     quiet=True,
                     overwrite_output=True,
                     capture_stdout=False,

@@ -46,7 +46,7 @@ def _comment_has_text(comment) -> bool:
     return bool(body.strip())
 
 
-def get_subreddit_threads(POST_ID: str = None):
+def get_subreddit_threads(POST_ID: str = None, story_path: str | Path = None):
     """
     Load a local story and return the same dict shape the rest of the app expects.
 
@@ -54,14 +54,16 @@ def get_subreddit_threads(POST_ID: str = None):
     same way it did when the project used the Reddit API.
     """
 
-    print_step("Loading local story...")
+    story_path = Path(story_path) if story_path else STORY_PATH
 
-    if not STORY_PATH.exists():
+    print_step(f"Loading local story from {story_path}...")
+
+    if not story_path.exists():
         raise FileNotFoundError(
-            f"Could not find {STORY_PATH}. Add a story JSON file before running the bot."
+            f"Could not find {story_path}. Add a story JSON file before running the bot."
         )
 
-    with STORY_PATH.open(encoding="utf-8") as story_file:
+    with story_path.open(encoding="utf-8") as story_file:
         story = json.load(story_file)
 
     thread_title = story.get("thread_title") or story.get("title") or "Local Reddit Story"

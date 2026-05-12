@@ -24,6 +24,7 @@ allow_nsfw = { optional = false, type = "bool", default = false, example = false
 theme = { optional = false, default = "dark", example = "light", options = ["dark", "light", "transparent", ], explanation = "Sets the Reddit theme, either LIGHT or DARK. For story mode you can also use a transparent background." }
 times_to_run = { optional = false, default = 1, example = 2, explanation = "Used if you want to run multiple times. Set to an int e.g. 4 or 29 or 1", type = "int", nmin = 1, oob_error = "It's very hard to run something less than once." }
 opacity = { optional = false, default = 0.9, example = 0.8, explanation = "Sets the opacity of the comments when overlayed over the background", type = "float", nmin = 0, nmax = 1, oob_error = "The opacity HAS to be between 0 and 1", input_error = "The opacity HAS to be a decimal number between 0 and 1" }
+story_text_background_opacity = { optional = true, default = 1.0, example = 0.65, explanation = "Sets the opacity of the story text card background. Use 1 for solid, 0.65 for translucent, or set theme to transparent for fully transparent.", type = "float", nmin = 0, nmax = 1, oob_error = "The story text background opacity HAS to be between 0 and 1", input_error = "The story text background opacity HAS to be a decimal number between 0 and 1" }
 #transition = { optional = true, default = 0.2, example = 0.2, explanation = "Sets the transition time (in seconds) between the comments. Set to 0 if you want to disable it.", type = "float", nmin = 0, nmax = 2, oob_error = "The transition HAS to be between 0 and 2", input_error = "The opacity HAS to be a decimal number between 0 and 2" }
 storymode = { optional = true, type = "bool", default = false, example = false, options = [true, false,], explanation = "Only read out title and post content, great for subreddits with stories" }
 storymodemethod= { optional = true, default = 1, example = 1, explanation = "Style that's used for the storymode. Set to 0 for single picture display in whole video, set to 1 for fancy looking video ", type = "int", nmin = 0, oob_error = "It's very hard to run something less than once.", options = [0, 1] }
@@ -45,7 +46,7 @@ background_thumbnail_font_size = { optional = true, type = "int", default = 96, 
 background_thumbnail_font_color = { optional = true, default = "255,255,255", example = "255,255,255", explanation = "Font color in RGB format for the thumbnail text" }
 
 [settings.tts]
-voice_choice = { optional = false, default = "tiktok", options = ["elevenlabs", "streamlabspolly", "tiktok", "googletranslate", "awspolly", "pyttsx", ], example = "tiktok", explanation = "The voice platform used for TTS generation. " }
+voice_choice = { optional = false, default = "piper", options = ["piper", "elevenlabs", "streamlabspolly", "tiktok", "googletranslate", "awspolly", "pyttsx", ], example = "piper", explanation = "The voice platform used for TTS generation. " }
 random_voice = { optional = false, type = "bool", default = true, example = true, options = [true, false,], explanation = "Randomizes the voice used for each comment" }
 elevenlabs_voice_name = { optional = false, default = "Bella", example = "Bella", explanation = "The voice used for elevenlabs", options = ["Adam", "Jessica", "Brian", "Roger", "Antoni", "Arnold", "Bella", "Domi", "Elli", "Josh", "Rachel", "Sam", ] }
 elevenlabs_api_key = { optional = true, example = "21f13f91f54d741e2ae27d2ab1b99d59", explanation = "Elevenlabs API key" }
@@ -57,3 +58,9 @@ python_voice = { optional = false, default = "1", example = "1", explanation = "
 py_voice_num = { optional = false, default = "2", example = "2", explanation = "The number of system voices (2 are pre-installed in Windows)" }
 silence_duration = { optional = true, example = "0.1", explanation = "Time in seconds between TTS comments", default = 0.3, type = "float" }
 no_emojis = { optional = false, type = "bool", default = false, example = false, options = [true, false,], explanation = "Whether to remove emojis from the comments" }
+piper_voice = { optional = true, default = "en_US-lessac-medium", example = "en_US-lessac-medium", explanation = "Piper voice model name in voices/piper, without the .onnx extension" }
+piper_voice_dir = { optional = true, default = "voices/piper", example = "voices/piper", explanation = "Directory containing Piper .onnx voice files" }
+piper_length_scale = { optional = true, type = "float", default = 1.05, example = 1.05, explanation = "Piper speech length. Higher is slower." }
+piper_noise_scale = { optional = true, type = "float", default = 0.55, example = 0.55, explanation = "Piper voice variation amount." }
+piper_noise_w_scale = { optional = true, type = "float", default = 0.75, example = 0.75, explanation = "Piper phoneme timing variation amount." }
+piper_sentence_silence = { optional = true, type = "float", default = 0.25, example = 0.25, explanation = "Seconds of silence after each sentence." }

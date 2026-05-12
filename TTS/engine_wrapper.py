@@ -1,5 +1,6 @@
 import os
 import re
+import textwrap
 from pathlib import Path
 from typing import Tuple
 
@@ -17,6 +18,50 @@ from utils.voice import sanitize_text
 DEFAULT_MAX_LENGTH: int = (
     5  # Video length variable, edit this on your own risk. It should work, but it's not supported
 )
+
+
+def story_segments(thread_post, max_chars: int = 135) -> list[str]:
+    """Return readable story chunks for storymode method 1."""
+    if isinstance(thread_post, list):
+        return [str(segment).strip() for segment in thread_post if str(segment).strip()]
+
+    paragraphs = [paragraph.strip() for paragraph in str(thread_post).splitlines() if paragraph.strip()]
+    if not paragraphs:
+        paragraphs = [str(thread_post).strip()]
+
+    segments = []
+    for paragraph in paragraphs:
+        sentences = [sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", paragraph) if sentence.strip()]
+        current_segment = ""
+        for sentence in sentences:
+            if not current_segment:
+                current_segment = sentence
+            elif len(f"{current_segment} {sentence}") <= max_chars:
+                current_segment = f"{current_segment} {sentence}"
+            else:
+                segments.extend(
+                    segment.strip()
+                    for segment in textwrap.wrap(
+                        current_segment,
+                        width=max_chars,
+                        break_long_words=False,
+                        break_on_hyphens=False,
+                    )
+                    if segment.strip()
+                )
+                current_segment = sentence
+        if current_segment:
+            segments.extend(
+                segment.strip()
+                for segment in textwrap.wrap(
+                    current_segment,
+                    width=max_chars,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+                if segment.strip()
+            )
+    return segments
 
 
 class TTSEngine:
@@ -82,8 +127,13 @@ class TTSEngine:
                 else:
                     self.call_tts("postaudio", process_text(self.reddit_object["thread_post"]))
             elif settings.config["settings"]["storymodemethod"] == 1:
-                for idx, text in track(enumerate(self.reddit_object["thread_post"])):
-                    self.call_tts(f"postaudio-{idx}", process_text(text))
+                for idx, text in track(
+                    enumerate(story_segments(self.reddit_object["thread_post"])),
+                    "Saving story audio...",
+                ):
+                    processed_text = process_text(text)
+                    if processed_text:
+                        self.call_tts(f"postaudio-{idx}", processed_text)
 
         else:
             for idx, comment in track(enumerate(self.reddit_object["comments"]), "Saving..."):

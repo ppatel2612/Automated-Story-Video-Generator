@@ -41,9 +41,9 @@ print_markdown(
 checkversion(__VERSION__)
 
 
-def main(POST_ID=None) -> None:
+def main(POST_ID=None, story_path=None) -> None:
     global redditid, reddit_object
-    reddit_object = get_subreddit_threads(POST_ID)
+    reddit_object = get_subreddit_threads(POST_ID, story_path=story_path)
     redditid = id(reddit_object)
     length, number_of_comments = save_text_to_mp3(reddit_object)
     length = math.ceil(length)

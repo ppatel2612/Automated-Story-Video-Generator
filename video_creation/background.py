@@ -98,6 +98,9 @@ def download_background_video(background_config: Tuple[str, str, str, Any]):
 
 def download_background_audio(background_config: Tuple[str, str, str]):
     """Downloads the background/s audio from YouTube."""
+    if settings.config["settings"]["background"]["background_audio_volume"] == 0:
+        print_step("Background audio volume is 0. Skipping background audio download.")
+        return
     Path("./assets/backgrounds/audio/").mkdir(parents=True, exist_ok=True)
     # note: make sure the file name doesn't include an - in it
     uri, filename, credit = background_config

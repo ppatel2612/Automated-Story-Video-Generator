@@ -29,7 +29,10 @@ class Browser:
         # Proxies not supported on login.
         # if WITH_PROXIES:
         #     options.add_argument('--proxy-server={}'.format(PROXIES[0]))
-        self._driver = uc.Chrome(options=options)
+        chrome_binary = os.getenv("CHROME_BINARY")
+        if chrome_binary:
+            options.binary_location = chrome_binary
+        self._driver = uc.Chrome(options=options, version_main=131)
         self.with_random_user_agent()
 
     def with_random_user_agent(self, fallback=None):

@@ -5,7 +5,7 @@ import textwrap
 from PIL import Image, ImageDraw, ImageFont
 from rich.progress import track
 
-from TTS.engine_wrapper import process_text
+from TTS.engine_wrapper import process_text, story_segments
 from utils.fonts import getheight, getsize
 
 
@@ -85,7 +85,7 @@ def imagemaker(theme, reddit_obj: dict, txtclr, padding=5, transparent=False) ->
     """
     Render Images for video
     """
-    texts = reddit_obj["thread_post"]
+    texts = story_segments(reddit_obj["thread_post"])
     id = re.sub(r"[^\w\s-]", "", reddit_obj["thread_id"])
 
     if transparent:

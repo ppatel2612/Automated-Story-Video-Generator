@@ -22,6 +22,10 @@ def _setting(path: list[str], default):
         return default
 
 
+def _alpha_from_opacity(opacity: float) -> int:
+    return max(0, min(255, round(float(opacity) * 255)))
+
+
 def _load_font(size: int, bold: bool = False):
     """Use the bundled fonts when possible and Pillow's default font otherwise."""
     font_names = ["Roboto-Bold.ttf", "Rubik-Bold.ttf"] if bold else ["Roboto-Regular.ttf"]
@@ -142,8 +146,11 @@ def get_screenshots_of_reddit_posts(reddit_object: dict, screenshot_num: int):
 
     # Match the old theme settings closely enough for the downstream overlay.
     theme = _setting(["settings", "theme"], "dark")
+    story_bg_alpha = _alpha_from_opacity(
+        _setting(["settings", "story_text_background_opacity"], 1.0)
+    )
     if theme == "dark":
-        bgcolor = (33, 33, 36, 255)
+        bgcolor = (33, 33, 36, story_bg_alpha)
         txtcolor = (240, 240, 240)
         mutedcolor = (165, 170, 176)
         bordercolor = (70, 70, 76)
@@ -162,7 +169,7 @@ def get_screenshots_of_reddit_posts(reddit_object: dict, screenshot_num: int):
             bordercolor = (70, 70, 76)
             transparent = False
     else:
-        bgcolor = (255, 255, 255, 255)
+        bgcolor = (255, 255, 255, story_bg_alpha)
         txtcolor = (0, 0, 0)
         mutedcolor = (95, 99, 104)
         bordercolor = (220, 220, 220)

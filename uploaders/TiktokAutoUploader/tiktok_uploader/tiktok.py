@@ -203,10 +203,14 @@ def upload_video(session_user, video, title, schedule_time=0, allow_comment=1, a
 		url = f"https://www.tiktok.com/api/v1/web/project/post/"
 		r = session.request("POST", url, params=project_post_dict, data=json.dumps(data), headers=headers)
 		try:
-			if r.json()["status_msg"] == "You are posting too fast. Take a rest.":
+			response_json = r.json()
+			if response_json.get("status_msg") == "You are posting too fast. Take a rest.":
 				print("[-] You are posting too fast, try later again")
 				return False
-			print(r.json())
+			if response_json.get("status_code") not in (0, None):
+				print(f"[-] TikTok rejected the publish request: {response_json}")
+				return False
+			print(response_json)
 			uploaded = True
 			break
 		except Exception as e:
@@ -225,10 +229,14 @@ def upload_video(session_user, video, title, schedule_time=0, allow_comment=1, a
 	# print(r.json()["infos"])
 	for j in r.json()["infos"]:
 		if j["creationID"] == creation_id:
-			if j["tasks"][0]["status_msg"] == "Y project task init" or j["tasks"][0]["status_msg"] == "Success":
+			tasks = j.get("tasks", [])
+			if not tasks:
+				print(f"[-] TikTok did not return processing tasks for this upload: {j}")
+				return False
+			if tasks[0]["status_msg"] == "Y project task init" or tasks[0]["status_msg"] == "Success":
 				print("[+] Video uploaded successfully.")
 				return True
-			print(f"[-] Video could not be uploaded: {j['tasks'][0]['status_msg']}")
+			print(f"[-] Video could not be uploaded: {tasks[0]['status_msg']}")
 			return False
 
 
@@ -312,4 +320,3 @@ if __name__ == "__main__":
 	      f"X TT Params: {json_output['x-tt-params']}\n"
 		  f"User Agent: {json_output['navigator']['user_agent']}\n"
 	      f"")
-

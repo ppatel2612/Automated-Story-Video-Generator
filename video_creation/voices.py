@@ -7,6 +7,7 @@ from TTS.elevenlabs import elevenlabs
 from TTS.engine_wrapper import TTSEngine
 from TTS.GTTS import GTTS
 from TTS.pyttsx import pyttsx
+from TTS.piper import Piper
 from TTS.streamlabs_polly import StreamlabsPolly
 from TTS.TikTok import TikTok
 from utils import settings
@@ -21,6 +22,7 @@ TTSProviders = {
     "TikTok": TikTok,
     "pyttsx": pyttsx,
     "ElevenLabs": elevenlabs,
+    "Piper": Piper,
 }
 
 

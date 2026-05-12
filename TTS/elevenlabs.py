@@ -1,6 +1,6 @@
 import random
 
-from elevenlabs import save
+from elevenlabs import VoiceSettings, save
 from elevenlabs.client import ElevenLabs
 
 from utils import settings
@@ -19,7 +19,20 @@ class elevenlabs:
         else:
             voice = str(settings.config["settings"]["tts"]["elevenlabs_voice_name"]).capitalize()
 
-        audio = self.client.generate(text=text, voice=voice, model="eleven_multilingual_v1")
+        tts_config = settings.config["settings"]["tts"]
+        voice_settings = VoiceSettings(
+            stability=float(tts_config.get("elevenlabs_stability", 0.45)),
+            similarity_boost=float(tts_config.get("elevenlabs_similarity_boost", 0.8)),
+            style=float(tts_config.get("elevenlabs_style", 0.25)),
+            use_speaker_boost=bool(tts_config.get("elevenlabs_speaker_boost", True)),
+        )
+        audio = self.client.generate(
+            text=text,
+            voice=voice,
+            voice_settings=voice_settings,
+            model=tts_config.get("elevenlabs_model", "eleven_multilingual_v2"),
+            output_format="mp3_44100_128",
+        )
         save(audio=audio, filename=filepath)
 
     def initialize(self):
