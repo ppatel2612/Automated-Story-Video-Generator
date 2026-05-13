@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 import textwrap
 from pathlib import Path
 from typing import Tuple
@@ -13,6 +14,7 @@ from rich.progress import track
 
 from utils import settings
 from utils.console import print_step, print_substep
+from utils.text_style import get_text_style
 from utils.voice import sanitize_text
 
 DEFAULT_MAX_LENGTH: int = (
@@ -20,10 +22,39 @@ DEFAULT_MAX_LENGTH: int = (
 )
 
 
-def story_segments(thread_post, max_chars: int = 135) -> list[str]:
+def _split_story_segment(text: str, max_chars: int, max_words: int | None = None) -> list[str]:
+    wrapped = textwrap.wrap(
+        text,
+        width=max_chars,
+        break_long_words=False,
+        break_on_hyphens=False,
+    )
+    if not max_words:
+        return [segment.strip() for segment in wrapped if segment.strip()]
+
+    split_segments = []
+    for segment in wrapped:
+        words = segment.split()
+        for index in range(0, len(words), max_words):
+            split_segment = " ".join(words[index : index + max_words]).strip()
+            if split_segment:
+                split_segments.append(split_segment)
+    return split_segments
+
+
+def story_segments(
+    thread_post,
+    max_chars: int = 135,
+    max_words: int | None = None,
+) -> list[str]:
     """Return readable story chunks for storymode method 1."""
     if isinstance(thread_post, list):
-        return [str(segment).strip() for segment in thread_post if str(segment).strip()]
+        segments = []
+        for segment in thread_post:
+            segment = str(segment).strip()
+            if segment:
+                segments.extend(_split_story_segment(segment, max_chars, max_words))
+        return segments
 
     paragraphs = [paragraph.strip() for paragraph in str(thread_post).splitlines() if paragraph.strip()]
     if not paragraphs:
@@ -34,33 +65,18 @@ def story_segments(thread_post, max_chars: int = 135) -> list[str]:
         sentences = [sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", paragraph) if sentence.strip()]
         current_segment = ""
         for sentence in sentences:
+            next_segment = f"{current_segment} {sentence}".strip()
             if not current_segment:
                 current_segment = sentence
-            elif len(f"{current_segment} {sentence}") <= max_chars:
-                current_segment = f"{current_segment} {sentence}"
+            elif len(next_segment) <= max_chars and (
+                not max_words or len(next_segment.split()) <= max_words
+            ):
+                current_segment = next_segment
             else:
-                segments.extend(
-                    segment.strip()
-                    for segment in textwrap.wrap(
-                        current_segment,
-                        width=max_chars,
-                        break_long_words=False,
-                        break_on_hyphens=False,
-                    )
-                    if segment.strip()
-                )
+                segments.extend(_split_story_segment(current_segment, max_chars, max_words))
                 current_segment = sentence
         if current_segment:
-            segments.extend(
-                segment.strip()
-                for segment in textwrap.wrap(
-                    current_segment,
-                    width=max_chars,
-                    break_long_words=False,
-                    break_on_hyphens=False,
-                )
-                if segment.strip()
-            )
+            segments.extend(_split_story_segment(current_segment, max_chars, max_words))
     return segments
 
 
@@ -127,13 +143,19 @@ class TTSEngine:
                 else:
                     self.call_tts("postaudio", process_text(self.reddit_object["thread_post"]))
             elif settings.config["settings"]["storymodemethod"] == 1:
+                style = get_text_style(settings.config)
                 for idx, text in track(
-                    enumerate(story_segments(self.reddit_object["thread_post"])),
+                    enumerate(
+                        story_segments(
+                            self.reddit_object["thread_post"],
+                            max_chars=style["segment_max_chars"],
+                        )
+                    ),
                     "Saving story audio...",
                 ):
                     processed_text = process_text(text)
                     if processed_text:
-                        self.call_tts(f"postaudio-{idx}", processed_text)
+                        self.call_tts(f"postaudio-{idx}", processed_text, trim_silence=True)
 
         else:
             for idx, comment in track(enumerate(self.reddit_object["comments"]), "Saving..."):
@@ -230,12 +252,38 @@ class TTSEngine:
         print(f"Finished processing {len(split_files)} audio chunks")
 
 
-    def call_tts(self, filename: str, text: str):
+    def trim_audio_silence(self, filepath: str) -> None:
+        trimmed_filepath = f"{filepath}.trim.mp3"
+        command = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            filepath,
+            "-af",
+            (
+                "areverse,"
+                "silenceremove=start_periods=1:start_duration=0.05:start_threshold=-45dB,"
+                "areverse,"
+                "silenceremove=start_periods=1:start_duration=0.03:start_threshold=-45dB"
+            ),
+            trimmed_filepath,
+        ]
+        try:
+            subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.replace(trimmed_filepath, filepath)
+        except (subprocess.CalledProcessError, OSError):
+            if os.path.exists(trimmed_filepath):
+                os.unlink(trimmed_filepath)
+
+    def call_tts(self, filename: str, text: str, trim_silence: bool = False):
+        filepath = f"{self.path}/{filename}.mp3"
         self.tts_module.run(
             text,
-            filepath=f"{self.path}/{filename}.mp3",
+            filepath=filepath,
             random_voice=settings.config["settings"]["tts"]["random_voice"],
         )
+        if trim_silence:
+            self.trim_audio_silence(filepath)
         # try:
         #     self.length += MP3(f"{self.path}/{filename}.mp3").info.length
         # except (MutagenError, HeaderNotFoundError):

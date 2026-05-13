@@ -11,6 +11,7 @@ from utils import settings
 from utils.console import print_step, print_substep
 from utils.ffmpeg_install import ffmpeg_install
 from utils.id import id
+from utils.story_input import STORY_DONE_DIR, STORY_FAILED_DIR, STORY_INBOX_DIR, load_story_file
 from video_creation.background import (
     chop_background,
     download_background_audio,
@@ -24,17 +25,43 @@ from video_creation.voices import save_text_to_mp3
 QUEUE_DIR = Path("data/queue")
 DONE_DIR = QUEUE_DIR / "done"
 FAILED_DIR = QUEUE_DIR / "failed"
+SUPPORTED_SUFFIXES = {".json", ".md"}
 
 
 def _prepare_queue_dirs() -> None:
     QUEUE_DIR.mkdir(parents=True, exist_ok=True)
     DONE_DIR.mkdir(parents=True, exist_ok=True)
     FAILED_DIR.mkdir(parents=True, exist_ok=True)
+    STORY_INBOX_DIR.mkdir(parents=True, exist_ok=True)
+    STORY_DONE_DIR.mkdir(parents=True, exist_ok=True)
+    STORY_FAILED_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _queued_stories() -> list[Path]:
     _prepare_queue_dirs()
-    return sorted(path for path in QUEUE_DIR.glob("*.json") if path.is_file())
+    queue_files = [
+        path
+        for path in QUEUE_DIR.iterdir()
+        if path.is_file()
+        and path.suffix.casefold() in SUPPORTED_SUFFIXES
+        and path.stem.casefold() != "readme"
+    ]
+    inbox_files = [
+        path
+        for path in STORY_INBOX_DIR.iterdir()
+        if path.is_file()
+        and path.suffix.casefold() in SUPPORTED_SUFFIXES
+        and path.stem.casefold() != "readme"
+    ]
+    return sorted(queue_files + inbox_files)
+
+
+def _done_dir_for(story_path: Path) -> Path:
+    return STORY_DONE_DIR if STORY_INBOX_DIR in story_path.parents else DONE_DIR
+
+
+def _failed_dir_for(story_path: Path) -> Path:
+    return STORY_FAILED_DIR if STORY_INBOX_DIR in story_path.parents else FAILED_DIR
 
 
 def _unique_destination(directory: Path, filename: str) -> Path:
@@ -54,6 +81,10 @@ def _move_story(story_path: Path, directory: Path) -> Path:
 
 def _render_story(story_path: Path) -> None:
     reddit_object = get_subreddit_threads(story_path=story_path)
+    _render_reddit_object(reddit_object)
+
+
+def _render_reddit_object(reddit_object: dict) -> None:
     reddit_id = id(reddit_object)
     length, number_of_comments = save_text_to_mp3(reddit_object)
     length = math.ceil(length)
@@ -69,7 +100,7 @@ def _render_story(story_path: Path) -> None:
 
 
 def _record_failed_story(story_path: Path) -> None:
-    failed_path = _move_story(story_path, FAILED_DIR)
+    failed_path = _move_story(story_path, _failed_dir_for(story_path))
     error_path = failed_path.with_suffix(failed_path.suffix + ".error.txt")
     error_path.write_text(traceback.format_exc(), encoding="utf-8")
     print_substep(
@@ -106,7 +137,10 @@ def main() -> int:
     stories = _queued_stories()
     if not stories:
         print_step("No queued stories found.")
-        print_substep("Add one JSON file per story to data/queue, then run this script again.")
+        print_substep(
+            "Add a Markdown story to data/stories/inbox or a JSON/Markdown file to data/queue.",
+            style="bold blue",
+        )
         return 0
 
     print_step(f"Found {len(stories)} queued stor{'y' if len(stories) == 1 else 'ies'}.")
@@ -116,7 +150,19 @@ def main() -> int:
     for index, story_path in enumerate(stories, start=1):
         print_step(f"Rendering queued story {index} of {len(stories)}: {story_path.name}")
         try:
-            _render_story(story_path)
+            story_parts = load_story_file(
+                story_path,
+                default_max_chars_per_video=int(
+                    settings.config["settings"].get("storymode_max_length") or 0
+                ),
+            )
+            for part_index, reddit_object in enumerate(story_parts, start=1):
+                if len(story_parts) > 1:
+                    print_step(
+                        f"Rendering part {part_index} of {len(story_parts)} from {story_path.name}: "
+                        f"{reddit_object['thread_title']}"
+                    )
+                _render_reddit_object(reddit_object)
         except KeyboardInterrupt:
             raise
         except SystemExit:
@@ -129,7 +175,7 @@ def main() -> int:
             continue
 
         successes += 1
-        done_path = _move_story(story_path, DONE_DIR)
+        done_path = _move_story(story_path, _done_dir_for(story_path))
         print_substep(f"Completed: moved {story_path.name} to {done_path}", style="bold green")
 
     print_step(f"Queue complete. Successful: {successes}. Failed: {failures}.")

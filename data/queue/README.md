@@ -1,11 +1,14 @@
 # Video Queue
 
-Put one local story JSON file per video in this folder, then run:
+You can put legacy JSON files or new Markdown story files in this folder, then run:
 
 ```bash
 source venvDigger/bin/activate
 python render_queue.py
 ```
+
+For pasted stories, prefer Markdown files in `data/stories/inbox`. Markdown preserves
+quotes, triple quotes, and newlines without JSON escaping.
 
 Successful story files move to `data/queue/done/`.
 Failed story files move to `data/queue/failed/` with an `.error.txt` log.

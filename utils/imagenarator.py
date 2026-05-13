@@ -1,12 +1,25 @@
-import os
+import json
 import re
 import textwrap
 
-from PIL import Image, ImageDraw, ImageFont
+import ffmpeg
+from PIL import Image, ImageDraw
 from rich.progress import track
 
 from TTS.engine_wrapper import process_text, story_segments
 from utils.fonts import getheight, getsize
+from utils import settings
+from utils.text_style import draw_centered_text, get_text_style, parse_color
+
+
+def _audio_duration(path: str) -> float:
+    return float(ffmpeg.probe(path)["format"]["duration"])
+
+
+def _segment_duration_slices(texts: list[str], duration: float) -> list[float]:
+    weights = [max(1, len(text.split())) for text in texts]
+    total_weight = sum(weights)
+    return [(duration * weight) / total_weight for weight in weights]
 
 
 def draw_multiple_line_text(
@@ -85,22 +98,47 @@ def imagemaker(theme, reddit_obj: dict, txtclr, padding=5, transparent=False) ->
     """
     Render Images for video
     """
-    texts = story_segments(reddit_obj["thread_post"])
+    style = get_text_style(settings.config)
+    audio_texts = story_segments(
+        reddit_obj["thread_post"],
+        max_chars=style["segment_max_chars"],
+    )
     id = re.sub(r"[^\w\s-]", "", reddit_obj["thread_id"])
-
-    if transparent:
-        font = ImageFont.truetype(os.path.join("fonts", "Roboto-Black.ttf"), 100)
-    else:
-        font = ImageFont.truetype(os.path.join("fonts", "Roboto-Regular.ttf"), 100)
+    background_alpha = round(float(style["background_opacity"]) * 255)
+    theme = (*parse_color(style["background_color"], (0, 0, 0)), background_alpha)
+    transparent = background_alpha == 0
     size = (1920, 1080)
 
-    image = Image.new("RGBA", size, theme)
+    timings = []
+    image_idx = 0
+    story_time = 0.0
 
-    for idx, text in track(enumerate(texts), "Rendering Image"):
-        image = Image.new("RGBA", size, theme)
-        text = process_text(text, False)
-        draw_multiple_line_text(image, text, font, txtclr, padding, wrap=30, transparent=transparent)
-        image.save(f"assets/temp/{id}/png/img{idx}.png")
+    for audio_idx, audio_text in track(enumerate(audio_texts), "Rendering Image"):
+        visual_texts = story_segments(
+            [audio_text],
+            max_chars=style["segment_max_chars"],
+            max_words=style["segment_max_words"],
+        )
+        duration = _audio_duration(f"assets/temp/{id}/mp3/postaudio-{audio_idx}.mp3")
+        duration_slices = _segment_duration_slices(visual_texts, duration)
+
+        for text, text_duration in zip(visual_texts, duration_slices):
+            image = Image.new("RGBA", size, theme)
+            text = process_text(text, False)
+            draw_centered_text(image, text, style, transparent=transparent)
+            image.save(f"assets/temp/{id}/png/img{image_idx}.png")
+            timings.append(
+                {
+                    "image": f"img{image_idx}.png",
+                    "start": story_time,
+                    "end": story_time + text_duration,
+                }
+            )
+            story_time += text_duration
+            image_idx += 1
+
+    with open(f"assets/temp/{id}/png/story_timings.json", "w", encoding="utf-8") as timing_file:
+        json.dump(timings, timing_file, indent=2)
 
 
 

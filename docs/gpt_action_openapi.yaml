@@ -1,0 +1,79 @@
+openapi: 3.1.0
+info:
+  title: Reddit Video Story Uploader
+  description: Save generated stories into the Reddit video maker Markdown inbox.
+  version: 1.0.0
+servers:
+  - url: https://YOUR-PUBLIC-HTTPS-URL-HERE
+paths:
+  /api/stories:
+    post:
+      operationId: saveStoryToVideoQueue
+      summary: Save a generated story to the local video queue
+      description: >
+        Saves a generated story as a Markdown file in data/stories/inbox.
+        Use this only after the user approves the final story text.
+      security:
+        - bearerAuth: []
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - story
+              properties:
+                title:
+                  type: string
+                  description: The video/story title.
+                story:
+                  type: string
+                  description: The full story text. Include normal newlines and update headings such as ## Update 1 when needed.
+                story_id:
+                  type: string
+                  description: Optional stable slug/id. If omitted, the server generates one from the title.
+                subreddit:
+                  type: string
+                  description: The subreddit/channel label to store in metadata.
+                  default: local
+                nsfw:
+                  type: boolean
+                  description: Whether the story should be marked NSFW.
+                  default: false
+                split_updates:
+                  type: boolean
+                  description: Whether headings like ## Update 1 should become separate videos.
+                  default: true
+                max_chars_per_video:
+                  type: integer
+                  description: Optional maximum story characters per generated video part. Use this to split long stories before rendering.
+                  default: 2000
+      responses:
+        "200":
+          description: Story saved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  path:
+                    type: string
+                  title:
+                    type: string
+                  render_command:
+                    type: string
+        "400":
+          description: Invalid request.
+        "401":
+          description: Missing or invalid bearer token.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

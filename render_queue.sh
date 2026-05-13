@@ -25,7 +25,7 @@ fi
 source "$VENV_DIR/bin/activate"
 
 log "Using Python: $(command -v python)"
-log "Rendering queued stories from data/queue."
+log "Rendering queued stories from data/queue and data/stories/inbox."
 
 python render_queue.py 2>&1 | tee -a "$LOG_FILE"
 status=${PIPESTATUS[0]}
@@ -35,7 +35,7 @@ deactivate || true
 if [[ "$status" -eq 0 ]]; then
     log "Queued video render completed successfully."
 else
-    log "Queued video render finished with failures. Check data/queue/failed and $LOG_FILE."
+    log "Queued video render finished with failures. Check data/queue/failed, data/stories/failed, and $LOG_FILE."
 fi
 
 exit "$status"

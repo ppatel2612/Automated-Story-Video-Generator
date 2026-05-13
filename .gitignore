@@ -127,6 +127,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+venvDigger/
+uploaders/TiktokAutoUploader/.tokvenv/
 
 # Spyder project settings
 .spyderproject
@@ -238,6 +240,31 @@ out/
 .DS_Store
 .setup-done-before
 results/
+
+# Local configuration, credentials, tokens, and logs
+config.toml
+api_keys.json
+logs/*.txt
+uploaders/instagram_creds.conf
+uploaders/YTtoken.json
+uploaders/youtube_client_secret.json
+uploaders/TiktokAutoUploader/CookiesDir/
+uploaders/TiktokAutoUploader/.tokvenv/
+
+# Local story inputs and render queue outputs
+data/story.json
+data/queue/*.json
+data/queue/*.md
+data/queue/done/
+data/queue/failed/
+data/stories/inbox/
+data/stories/done/
+data/stories/failed/
+!data/stories/README.md
+!data/stories/example.md
+
+# Generated video index/cache data
+video_creation/data/videos.json
 reddit-bot-351418-5560ebc49cac.json
 /.idea
 *.pyc

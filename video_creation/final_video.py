@@ -1,4 +1,5 @@
 import multiprocessing
+import json
 import os
 import re
 import tempfile
@@ -21,6 +22,7 @@ from utils.console import print_step, print_substep
 from utils.fonts import getheight
 from utils.thumbnail import create_thumbnail
 from utils.videos import save_data
+from utils.text_style import get_text_style
 
 console = Console()
 
@@ -254,7 +256,9 @@ def make_final_video(
 
     console.log(f"[bold green] Video Will Be: {length} Seconds Long")
 
-    screenshot_width = int((W * 45) // 100)
+    text_style = get_text_style(settings.config)
+    screenshot_width = int((W * text_style["overlay_width_percent"]) // 100)
+    title_width = int(screenshot_width * 0.8)
     audio = ffmpeg.input(f"assets/temp/{reddit_id}/audio.mp3")
     final_audio = merge_background_audio(audio, reddit_id)
     final_audio = final_audio.filter("volume", 2.0)
@@ -283,7 +287,7 @@ def make_final_video(
         image_clips.insert(
             0,
             ffmpeg.input(f"assets/temp/{reddit_id}/png/title.png")["v"].filter(
-                "scale", screenshot_width, -1
+                "scale", title_width, -1
             ),
         )
 
@@ -330,20 +334,40 @@ def make_final_video(
                     x="(main_w-overlay_w)/2",
                     y="(main_h-overlay_h)/2",
                 )
-            current_time = audio_clips_durations[0]
-            for i in track(range(0, number_of_clips + 1), "Collecting the image files..."):
-                image_clip = (
-                    ffmpeg.input(f"assets/temp/{reddit_id}/png/img{i}.png")["v"].filter(
-                        "scale", screenshot_width, -1
+            timing_path = Path(f"assets/temp/{reddit_id}/png/story_timings.json")
+            if timing_path.exists():
+                story_timings = json.loads(timing_path.read_text())
+                title_duration = audio_clips_durations[0]
+                for timing in track(story_timings, "Collecting the image files..."):
+                    image_clip = (
+                        ffmpeg.input(f"assets/temp/{reddit_id}/png/{timing['image']}")["v"].filter(
+                            "scale", screenshot_width, -1
+                        )
                     )
-                )
-                background_clip = background_clip.overlay(
-                    image_clip,
-                    enable=f"between(t,{current_time},{current_time + audio_clips_durations[i + 1]})",
-                    x="(main_w-overlay_w)/2",
-                    y="(main_h-overlay_h)/2",
-                )
-                current_time += audio_clips_durations[i + 1]
+                    background_clip = background_clip.overlay(
+                        image_clip,
+                        enable=(
+                            f"between(t,{title_duration + timing['start']},"
+                            f"{title_duration + timing['end']})"
+                        ),
+                        x="(main_w-overlay_w)/2",
+                        y="(main_h-overlay_h)/2",
+                    )
+            else:
+                current_time = audio_clips_durations[0]
+                for i in track(range(0, number_of_clips + 1), "Collecting the image files..."):
+                    image_clip = (
+                        ffmpeg.input(f"assets/temp/{reddit_id}/png/img{i}.png")["v"].filter(
+                            "scale", screenshot_width, -1
+                        )
+                    )
+                    background_clip = background_clip.overlay(
+                        image_clip,
+                        enable=f"between(t,{current_time},{current_time + audio_clips_durations[i + 1]})",
+                        x="(main_w-overlay_w)/2",
+                        y="(main_h-overlay_h)/2",
+                    )
+                    current_time += audio_clips_durations[i + 1]
     else:
         for i in range(0, number_of_clips + 1):
             image_clips.append(

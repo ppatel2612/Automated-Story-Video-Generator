@@ -7,6 +7,7 @@ from rich.progress import track
 
 from utils import settings
 from utils.console import print_step, print_substep
+from utils.text_style import get_text_style, parse_color
 
 __all__ = ["get_screenshots_of_reddit_posts"]
 
@@ -78,11 +79,12 @@ def _draw_card(
     border_color: tuple[int, int, int],
 ):
     """Create a simple Reddit-style card PNG for the video overlay."""
-    width = 900
-    padding = 44
-    title_font = _load_font(38, bold=True)
-    body_font = _load_font(31)
-    meta_font = _load_font(23)
+    style = get_text_style(settings.config)
+    width = style["card_width"]
+    padding = style["card_padding"]
+    title_font = _load_font(style["title_font_size"], bold=True)
+    body_font = _load_font(style["body_font_size"])
+    meta_font = _load_font(style["meta_font_size"])
     max_text_width = width - (padding * 2)
 
     title_lines = _wrap_text(title, title_font, max_text_width)
@@ -108,7 +110,7 @@ def _draw_card(
     # A light outline helps transparent and dark cards remain readable on video.
     draw.rounded_rectangle(
         (1, 1, width - 2, height - 2),
-        radius=28,
+        radius=style["border_radius"],
         outline=border_color,
         width=2,
     )
@@ -146,6 +148,7 @@ def get_screenshots_of_reddit_posts(reddit_object: dict, screenshot_num: int):
 
     # Match the old theme settings closely enough for the downstream overlay.
     theme = _setting(["settings", "theme"], "dark")
+    style = get_text_style(settings.config)
     story_bg_alpha = _alpha_from_opacity(
         _setting(["settings", "story_text_background_opacity"], 1.0)
     )
@@ -168,12 +171,20 @@ def get_screenshots_of_reddit_posts(reddit_object: dict, screenshot_num: int):
             mutedcolor = (165, 170, 176)
             bordercolor = (70, 70, 76)
             transparent = False
+
     else:
         bgcolor = (255, 255, 255, story_bg_alpha)
         txtcolor = (0, 0, 0)
         mutedcolor = (95, 99, 104)
         bordercolor = (220, 220, 220)
         transparent = False
+
+    custom_bg_alpha = _alpha_from_opacity(style["background_opacity"])
+    bgcolor = (*parse_color(style["background_color"], bgcolor[:3]), custom_bg_alpha)
+    txtcolor = parse_color(style["font_color"], txtcolor)
+    mutedcolor = parse_color(style["muted_color"], mutedcolor)
+    bordercolor = parse_color(style["outline_color"], bordercolor)
+    transparent = storymode and custom_bg_alpha == 0
 
     if storymode and _setting(["settings", "storymodemethod"], 0) == 1:
         from utils.imagenarator import imagemaker

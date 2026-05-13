@@ -28,12 +28,32 @@ story_text_background_opacity = { optional = true, default = 1.0, example = 0.65
 #transition = { optional = true, default = 0.2, example = 0.2, explanation = "Sets the transition time (in seconds) between the comments. Set to 0 if you want to disable it.", type = "float", nmin = 0, nmax = 2, oob_error = "The transition HAS to be between 0 and 2", input_error = "The opacity HAS to be a decimal number between 0 and 2" }
 storymode = { optional = true, type = "bool", default = false, example = false, options = [true, false,], explanation = "Only read out title and post content, great for subreddits with stories" }
 storymodemethod= { optional = true, default = 1, example = 1, explanation = "Style that's used for the storymode. Set to 0 for single picture display in whole video, set to 1 for fancy looking video ", type = "int", nmin = 0, oob_error = "It's very hard to run something less than once.", options = [0, 1] }
-storymode_max_length = { optional = true, default = 1000, example = 1000, explanation = "Max length of the storymode video in characters. 200 characters are approximately 50 seconds.", type = "int", nmin = 1, oob_error = "It's very hard to make a video under a second." }
+storymode_max_length = { optional = true, default = 2000, example = 2000, explanation = "Max length of each storymode video part in characters. Local Markdown stories are split before rendering when a section exceeds this value.", type = "int", nmin = 1, oob_error = "It's very hard to make a video under a second." }
 resolution_w = { optional = false, default = 1080, example = 1440, explantation = "Sets the width in pixels of the final video" }
 resolution_h = { optional = false, default = 1920, example = 2560, explantation = "Sets the height in pixels of the final video" }
 zoom = { optional = true, default = 1, example = 1.1, explanation = "Sets the browser zoom level. Useful if you want the text larger.", type = "float", nmin = 0.1, nmax = 2, oob_error = "The text is really difficult to read at a zoom level higher than 2" }
 channel_name = { optional = true, default = "Reddit Tales", example = "Reddit Stories", explanation = "Sets the channel name for the video" }
 show_Reddit_Title = { optional = true, option = [true, false], default = "true", type = "bool", explanation = "Show Reddit post at start of video?" }
+
+[settings.text]
+font_size = { optional = true, default = 100, example = 110, explanation = "Main story text font size in pixels", type = "int", nmin = 12, nmax = 260 }
+title_font_size = { optional = true, default = 38, example = 42, explanation = "Card title font size in pixels", type = "int", nmin = 12, nmax = 180 }
+body_font_size = { optional = true, default = 31, example = 34, explanation = "Card body font size in pixels", type = "int", nmin = 12, nmax = 180 }
+meta_font_size = { optional = true, default = 23, example = 24, explanation = "Card metadata font size in pixels", type = "int", nmin = 8, nmax = 120 }
+font_color = { optional = true, default = "255,255,255", example = "255,255,255", explanation = "Main text color as RGB values" }
+muted_color = { optional = true, default = "215,215,215", example = "180,180,180", explanation = "Secondary text color as RGB values" }
+background_color = { optional = true, default = "0,0,0", example = "0,0,0", explanation = "Text image background color as RGB values" }
+background_opacity = { optional = true, default = 0.0, example = 0.65, explanation = "Text image background opacity from 0 to 1", type = "float", nmin = 0, nmax = 1 }
+outline_color = { optional = true, default = "0,0,0", example = "0,0,0", explanation = "Text outline or card border color as RGB values" }
+outline_size = { optional = true, default = 4, example = 4, explanation = "Story text outline size in pixels", type = "int", nmin = 0, nmax = 30 }
+line_padding = { optional = true, default = 5, example = 8, explanation = "Vertical space between story text lines", type = "int", nmin = 0, nmax = 80 }
+wrap_width = { optional = true, default = 30, example = 28, explanation = "Approximate number of characters per story text line", type = "int", nmin = 8, nmax = 100 }
+card_width = { optional = true, default = 900, example = 900, explanation = "Width of Reddit-style cards in pixels", type = "int", nmin = 300, nmax = 1600 }
+card_padding = { optional = true, default = 44, example = 44, explanation = "Inner padding of Reddit-style cards in pixels", type = "int", nmin = 0, nmax = 180 }
+border_radius = { optional = true, default = 28, example = 18, explanation = "Corner radius of Reddit-style cards in pixels", type = "int", nmin = 0, nmax = 120 }
+overlay_width_percent = { optional = true, default = 88, example = 92, explanation = "How much of the final video width text and title cards should occupy", type = "int", nmin = 35, nmax = 100 }
+segment_max_chars = { optional = true, default = 75, example = 65, explanation = "Maximum characters shown on each story text screen", type = "int", nmin = 25, nmax = 180 }
+segment_max_words = { optional = true, default = 5, example = 5, explanation = "Maximum words shown on each story text screen", type = "int", nmin = 1, nmax = 30 }
 
 [settings.background]
 background_video = { optional = true, default = "minecraft", example = "rocket-league", options = ["minecraft", "gta", "rocket-league", "motor-gta", "csgo-surf", "cluster-truck", "minecraft-2","multiversus","fall-guys","steep", ""], explanation = "Sets the background for the video based on game name" }

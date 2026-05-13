@@ -1,0 +1,191 @@
+{% extends "layout.html" %}
+{% block main %}
+
+<main>
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-lg-7">
+                <form id="textStyleForm" action="/text-style" method="post" novalidate>
+                    <p class="h4">Text Preview</p>
+
+                    <div class="row mb-2">
+                        <label for="font_size" class="col-5">Story Font Size</label>
+                        <div class="col-7">
+                            <input name="font_size" type="number" min="12" max="260" step="1" class="form-control"
+                                value="{{ data.font_size }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="title_font_size" class="col-5">Card Title Size</label>
+                        <div class="col-7">
+                            <input name="title_font_size" type="number" min="12" max="180" step="1" class="form-control"
+                                value="{{ data.title_font_size }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="body_font_size" class="col-5">Card Body Size</label>
+                        <div class="col-7">
+                            <input name="body_font_size" type="number" min="12" max="180" step="1" class="form-control"
+                                value="{{ data.body_font_size }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="meta_font_size" class="col-5">Card Meta Size</label>
+                        <div class="col-7">
+                            <input name="meta_font_size" type="number" min="8" max="120" step="1" class="form-control"
+                                value="{{ data.meta_font_size }}">
+                        </div>
+                    </div>
+
+                    <p class="h5 mt-4">Colour And Background</p>
+                    <div class="row mb-2">
+                        <label for="font_color" class="col-5">Text Colour RGB</label>
+                        <div class="col-7">
+                            <input name="font_color" type="text" class="form-control" value="{{ data.font_color }}"
+                                placeholder="255,255,255">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="muted_color" class="col-5">Muted Text RGB</label>
+                        <div class="col-7">
+                            <input name="muted_color" type="text" class="form-control" value="{{ data.muted_color }}"
+                                placeholder="215,215,215">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="background_color" class="col-5">Background RGB</label>
+                        <div class="col-7">
+                            <input name="background_color" type="text" class="form-control"
+                                value="{{ data.background_color }}" placeholder="0,0,0">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="background_opacity" class="col-5">Background Opacity</label>
+                        <div class="col-7">
+                            <input name="background_opacity" type="number" min="0" max="1" step="0.05"
+                                class="form-control" value="{{ data.background_opacity }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="outline_color" class="col-5">Outline RGB</label>
+                        <div class="col-7">
+                            <input name="outline_color" type="text" class="form-control" value="{{ data.outline_color }}"
+                                placeholder="0,0,0">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="outline_size" class="col-5">Outline Size</label>
+                        <div class="col-7">
+                            <input name="outline_size" type="number" min="0" max="30" step="1" class="form-control"
+                                value="{{ data.outline_size }}">
+                        </div>
+                    </div>
+
+                    <p class="h5 mt-4">Layout</p>
+                    <div class="row mb-2">
+                        <label for="line_padding" class="col-5">Line Padding</label>
+                        <div class="col-7">
+                            <input name="line_padding" type="number" min="0" max="80" step="1" class="form-control"
+                                value="{{ data.line_padding }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="wrap_width" class="col-5">Wrap Width</label>
+                        <div class="col-7">
+                            <input name="wrap_width" type="number" min="8" max="100" step="1" class="form-control"
+                                value="{{ data.wrap_width }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="card_width" class="col-5">Card Width</label>
+                        <div class="col-7">
+                            <input name="card_width" type="number" min="300" max="1600" step="1" class="form-control"
+                                value="{{ data.card_width }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="card_padding" class="col-5">Card Padding</label>
+                        <div class="col-7">
+                            <input name="card_padding" type="number" min="0" max="180" step="1" class="form-control"
+                                value="{{ data.card_padding }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="border_radius" class="col-5">Card Border Radius</label>
+                        <div class="col-7">
+                            <input name="border_radius" type="number" min="0" max="120" step="1" class="form-control"
+                                value="{{ data.border_radius }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="overlay_width_percent" class="col-5">Final Screen Width %</label>
+                        <div class="col-7">
+                            <input name="overlay_width_percent" type="number" min="35" max="100" step="1"
+                                class="form-control" value="{{ data.overlay_width_percent }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="segment_max_words" class="col-5">Words Per Screen</label>
+                        <div class="col-7">
+                            <input name="segment_max_words" type="number" min="1" max="30" step="1"
+                                class="form-control" value="{{ data.segment_max_words }}">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <label for="segment_max_chars" class="col-5">TTS Chunk Characters</label>
+                        <div class="col-7">
+                            <input name="segment_max_chars" type="number" min="25" max="180" step="1"
+                                class="form-control" value="{{ data.segment_max_chars }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-2 mt-4">
+                        <label for="profile_name" class="col-5">Profile Name</label>
+                        <div class="col-7">
+                            <input name="profile_name" type="text" class="form-control" list="profileNames"
+                                placeholder="Large white captions">
+                            <datalist id="profileNames">
+                                {% for name in profiles.keys() %}
+                                <option value="{{ name }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" name="action" value="save_settings" class="btn btn-success">Save Settings</button>
+                        <button type="submit" name="action" value="save_profile" class="btn btn-primary">Save Profile</button>
+                        <button type="submit" name="action" value="load_profile" class="btn btn-secondary">Load Profile</button>
+                        <button type="submit" name="action" value="delete_profile" class="btn btn-outline-danger">Delete Profile</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="sticky-top pt-3">
+                    <label for="preview_text" class="form-label">Preview Text</label>
+                    <textarea id="preview_text" class="form-control mb-3" rows="3">This is how your story text will look before rendering.</textarea>
+                    <img id="previewImage" class="img-fluid border bg-dark" alt="Text preview">
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function updatePreview() {
+        const params = new URLSearchParams();
+        $("#textStyleForm input[name]").each(function () {
+            params.set($(this).prop("name"), $(this).val());
+        });
+        params.set("preview_text", $("#preview_text").val());
+        $("#previewImage").prop("src", "/text-style/preview?" + params.toString() + "&_=" + Date.now());
+    }
+
+    $(document).ready(function () {
+        updatePreview();
+        $("#textStyleForm input, #preview_text").on("input", updatePreview);
+    });
+</script>
+
+{% endblock %}

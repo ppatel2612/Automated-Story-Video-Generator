@@ -253,6 +253,8 @@
                 <div class="col-8">
                     <select name="voice_choice" class="form-select" data-toggle="tooltip"
                         data-original-title='The voice platform used for TTS generation'>
+                        <option value="piper">Piper</option>
+                        <option value="elevenlabs">ElevenLabs</option>
                         <option value="streamlabspolly">Streamlabspolly</option>
                         <option value="tiktok">TikTok</option>
                         <option value="googletranslate">Google Translate</option>
@@ -262,6 +264,55 @@
                 </div>
             </div>
             <div class="row mb-2">
+                <label class="col-4">Random Voice</label>
+                <div class="col-8">
+                    <div class="form-check form-switch">
+                        <input name="random_voice" class="form-check-input" type="checkbox" value="True"
+                            data-toggle="tooltip"
+                            data-original-title='If checked, the selected voice below may be ignored by supported providers'>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2 voice-provider-row" data-provider="piper">
+                <label for="piper_voice" class="col-4">Piper Voice</label>
+                <div class="col-8">
+                    <div class="input-group voices">
+                        <select name="piper_voice" class="form-select" data-toggle="tooltip"
+                            data-original-title='The local Piper voice model'>
+                            <option value="en_US-lessac-medium">en_US-lessac-medium</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" disabled title="No bundled Piper sample yet">
+                            <i id="piper_icon" class="bi-volume-up-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2 voice-provider-row" data-provider="elevenlabs">
+                <label for="elevenlabs_voice_name" class="col-4">ElevenLabs Voice</label>
+                <div class="col-8">
+                    <div class="input-group voices">
+                        <select name="elevenlabs_voice_name" class="form-select" data-toggle="tooltip"
+                            data-original-title='The voice used for ElevenLabs'>
+                            <option value="Adam">Adam</option>
+                            <option value="Jessica">Jessica</option>
+                            <option value="Brian">Brian</option>
+                            <option value="Roger">Roger</option>
+                            <option value="Antoni">Antoni</option>
+                            <option value="Arnold">Arnold</option>
+                            <option value="Bella">Bella</option>
+                            <option value="Domi">Domi</option>
+                            <option value="Elli">Elli</option>
+                            <option value="Josh">Josh</option>
+                            <option value="Rachel">Rachel</option>
+                            <option value="Sam">Sam</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" disabled title="No bundled ElevenLabs sample">
+                            <i id="elevenlabs_icon" class="bi-volume-up-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2 voice-provider-row" data-provider="awspolly">
                 <label for="aws_polly_voice" class="col-4">AWS Polly Voice</label>
                 <div class="col-8">
                     <div class="input-group voices">
@@ -289,7 +340,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2">
+            <div class="row mb-2 voice-provider-row" data-provider="streamlabspolly">
                 <label for="streamlabs_polly_voice" class="col-4">Streamlabs Polly Voice</label>
                 <div class="col-8">
                     <div class="input-group voices">
@@ -317,7 +368,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2">
+            <div class="row mb-2 voice-provider-row" data-provider="tiktok">
                 <label for="tiktok_voice" class="col-4">TikTok Voice</label>
                 <div class="col-8">
                     <div class="input-group voices">
@@ -435,8 +486,12 @@
     // Test voices buttons
     var playing = false;
 
-    $(".voices button").click(function () {
-        var icon = $(this).find("i");
+    function playVoiceSample(button) {
+        if ($(button).prop("disabled")) {
+            return;
+        }
+
+        var icon = $(button).find("i");
         var audio = $("audio");
 
         if (playing) {
@@ -451,16 +506,37 @@
         }
 
         icon.toggleClass("bi-volume-up-fill bi-stop-fill");
-        let path = "voices/" + $(this).closest(".voices").find("select").prop("value").toLowerCase() + ".mp3";
+        let path = "voices/" + $(button).closest(".voices").find("select").prop("value").toLowerCase() + ".mp3";
 
         audio.prop("src", path);
-        audio[0].play();
+        audio[0].play().catch(function () {
+            icon.toggleClass("bi-volume-up-fill bi-stop-fill");
+            playing = false;
+        });
         playing = icon;
 
         audio[0].onended = function () {
             icon.toggleClass("bi-volume-up-fill bi-stop-fill");
             playing = false;
         }
+    }
+
+    function updateVoiceProviderRows(playSample) {
+        let provider = $('[name="voice_choice"]').val();
+        $(".voice-provider-row").addClass("d-none");
+        let row = $('.voice-provider-row[data-provider="' + provider + '"]');
+        row.removeClass("d-none");
+
+        if (playSample) {
+            let button = row.find(".voices button:not(:disabled)").first();
+            if (button.length) {
+                playVoiceSample(button);
+            }
+        }
+    }
+
+    $(".voices button").click(function () {
+        playVoiceSample(this);
     });
 
     // Wait for DOM to load
@@ -489,6 +565,20 @@
         // Set current select options
         $('.form-select').each(function () {
             $(this).prop("value", data[$(this).prop("name")]);
+        });
+
+        updateVoiceProviderRows(false);
+
+        $('[name="voice_choice"]').on("change", function () {
+            updateVoiceProviderRows(true);
+        });
+
+        $(".voice-provider-row select").on("change", function () {
+            $('[name="random_voice"]').prop("checked", false);
+            let button = $(this).closest(".voices").find("button:not(:disabled)").first();
+            if (button.length) {
+                playVoiceSample(button);
+            }
         });
 
         // Submit "False" when checkbox isn't ticked
